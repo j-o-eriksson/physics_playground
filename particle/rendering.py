@@ -7,11 +7,11 @@ import sdl2.ext
 import numpy as np
 
 from physics import (
-        Particle,
-        Surface,
-        RigidBody,
-        process,
-        make_rigid_body,
+    Particle,
+    Surface,
+    RigidBody,
+    process,
+    make_rigid_body,
 )
 
 
@@ -59,16 +59,16 @@ class ParticleSprite:
 
 def make_example_body():
     positions = [
-            np.array([100., 130.]),
-            np.array([160., 130.]),
-            np.array([130., 100.]),
-            np.array([130., 160.]),
-            ]
-    particles = [Particle(pos=np.r_[pos, 0.], radius=10.) for pos in positions]
+        np.array([100.0, 130.0]),
+        np.array([160.0, 130.0]),
+        np.array([130.0, 100.0]),
+        np.array([130.0, 160.0]),
+    ]
+    particles = [Particle(pos=np.r_[pos, 0.0], radius=10.0) for pos in positions]
 
-    return make_rigid_body(particles,
-            vel=np.array([10., 0., 0.]),
-            w=np.array([0., 0., 1.]))
+    return make_rigid_body(
+        particles, vel=np.array([10.0, 0.0, 0.0]), w=np.array([0.0, 0.0, 1.0])
+    )
 
 
 def run():
@@ -83,14 +83,17 @@ def run():
     factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
 
     init_data = [
-            (np.random.uniform(0, 550, 2), np.random.uniform(-300, 300, 2))
-            for _ in range(50)]
+        (np.random.uniform(0, 550, 2), np.random.uniform(-300, 300, 2))
+        for _ in range(50)
+    ]
 
     rb = make_example_body()
     particles = rb.particles
 
-    particles = [Particle(np.r_[pos, 0.], np.r_[vel, 0.], radius=10.)
-            for pos, vel in init_data]
+    particles = [
+        Particle(np.r_[pos, 0.0], np.r_[vel, 0.0], radius=10.0)
+        for pos, vel in init_data
+    ]
     particle_sprites = [ParticleSprite(world, factory, p) for p in particles]
 
     s1 = Surface(pos=np.array([0.0, 0.0]), norm=np.array([1.0, 0.0]))  # left
@@ -124,5 +127,5 @@ def run():
         sdl2.SDL_Delay(10)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

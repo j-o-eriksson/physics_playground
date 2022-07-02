@@ -36,8 +36,8 @@ class RigidBody:
         self.v = vel
         self.w = w  # angular velocity
 
-        self.F = np.zeros(3) 
-        self.T = np.zeros(3) 
+        self.F = np.zeros(3)
+        self.T = np.zeros(3)
 
         self.update_particles(dt=0.0)
 
@@ -46,7 +46,7 @@ class RigidBody:
 
     def apply_force(self, dt):
 
-        # dv/dt = F / m  
+        # dv/dt = F / m
         # Velocity update: dv = a * dt = F / m * dt
 
         self.v += self.F / self.mass * dt
@@ -54,7 +54,7 @@ class RigidBody:
 
     def apply_torque(self, dt):
 
-        # dL/dt = T = r x F, Iw = L  
+        # dL/dt = T = r x F, Iw = L
         # Angular velocity update: dw = I_inv * T * dt
 
         # (i) rotate inertia and (ii) update angular velocity
@@ -76,7 +76,7 @@ class RigidBody:
         R = self.q.rotation_matrix
         for p in self.particles:
             p.r = R @ p.r0
-            p.pos = (self.p + p.r)
+            p.pos = self.p + p.r
             # p.vel = self.v + np.cross(p.r, self.w)
 
 
@@ -93,14 +93,15 @@ def make_rigid_body(particles, vel, w):
 
 class Surface:
     def __init__(self, pos, norm):
-        self.pos = np.r_[pos, 0.]
-        self.norm = np.r_[norm, 0.]
+        self.pos = np.r_[pos, 0.0]
+        self.norm = np.r_[norm, 0.0]
         self.v = pos @ norm
 
 
 class Collision:
-    def __init__(self, p1: Particle, p2: Particle,
-            b1: RigidBody = None, b2: RigidBody = None):
+    def __init__(
+        self, p1: Particle, p2: Particle, b1: RigidBody = None, b2: RigidBody = None
+    ):
         self.p1 = p1
         self.p2 = p2
         self.b1 = b1
@@ -108,7 +109,7 @@ class Collision:
 
     def force(self):
         K, C, T = 80.0, 5.0, 1.0
-        
+
         r = self.p1.pos - self.p2.pos
         v = self.p1.vel - self.p2.vel
         r_norm = np.linalg.norm(r)
@@ -158,22 +159,32 @@ def _is_colliding(p1: Particle, p2: Particle):
 
 def find_particle_collisions(particles):
     """Brute-force collision detection."""
-    return [Collision(p1, p2) for p1, p2 in combinations(particles, 2) 
-            if _is_colliding(p1, p2)]
+    return [
+        Collision(p1, p2)
+        for p1, p2 in combinations(particles, 2)
+        if _is_colliding(p1, p2)
+    ]
 
 
 def find_rigid_body_collisions(bodies):
     """Brute-force collision detection."""
-    return [Collision(p1, p2, b1, b2) for b1, b2 in combinations(bodies, 2)
-            for p1, p2 in product(b1.particles, b2.particles) if _is_colliding(p1, p2)]
+    return [
+        Collision(p1, p2, b1, b2)
+        for b1, b2 in combinations(bodies, 2)
+        for p1, p2 in product(b1.particles, b2.particles)
+        if _is_colliding(p1, p2)
+    ]
 
 
 def find_surface_collisions(particles, surfaces):
     def _is_colliding_surface(p, s):
         return p.pos @ s.norm < s.v
 
-    return [SurfaceCollision(p, s) for p, s in product(particles, surfaces) 
-            if _is_colliding_surface(p, s)]
+    return [
+        SurfaceCollision(p, s)
+        for p, s in product(particles, surfaces)
+        if _is_colliding_surface(p, s)
+    ]
 
 
 def process(particles, surfaces, dt):
@@ -206,11 +217,11 @@ def update_quaternion(q0: Quaternion, w):
     q1 = dq * q0
     return q1.unit
 
-    
+
 def _to_update_quat(w):
     w_len = np.linalg.norm(w)
     if w_len < 1e-10:
-        return Quaternion(np.array([1., 0., 0., 0.]))
+        return Quaternion(np.array([1.0, 0.0, 0.0, 0.0]))
 
     theta = 0.5 * w_len
     a = np.cos(theta)
@@ -227,38 +238,35 @@ def test_collision():
 
 
 def test_quaternion():
-    p1 = np.array([1., 1., 0.])
+    p1 = np.array([1.0, 1.0, 0.0])
 
-    q0 = Quaternion(np.array([1., 0., 0., 0.]))
-    dq = _to_update_quat(np.array([0., 0., np.pi]))
+    q0 = Quaternion(np.array([1.0, 0.0, 0.0, 0.0]))
+    dq = _to_update_quat(np.array([0.0, 0.0, np.pi]))
 
     q1 = q0 * dq
     q2 = dq * q0
 
-    print(f'q0 * dq: {q1.rotate(p1)}')
-    print(f'dq * q0: {q2.rotate(p1)}')
-    print(f'q1: {q1}, q2: {q2.unit}')
+    print(f"q0 * dq: {q1.rotate(p1)}")
+    print(f"dq * q0: {q2.rotate(p1)}")
+    print(f"q1: {q1}, q2: {q2.unit}")
 
 
 def test_rigid_body():
     positions = [
-            np.array([100., 110., 0.]),
-            np.array([120., 110., 0.]),
-            np.array([110., 100., 0.]),
-            np.array([110., 120., 0.]),
-            ]
+        np.array([100.0, 110.0, 0.0]),
+        np.array([120.0, 110.0, 0.0]),
+        np.array([110.0, 100.0, 0.0]),
+        np.array([110.0, 120.0, 0.0]),
+    ]
 
-    vel = np.zeros(3) 
-    angular_velocity = np.zeros(3) 
+    vel = np.zeros(3)
+    angular_velocity = np.zeros(3)
 
-    particles = [Particle(pos=pos, vel=vel, radius=10.) for pos in positions]
-    body = make_rigid_body(particles, vel=velocity, w=angular_velocity) 
+    particles = [Particle(pos=pos, vel=vel, radius=10.0) for pos in positions]
+    body = make_rigid_body(particles, vel=velocity, w=angular_velocity)
     print(body)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_quaternion()
     test_rigid_body()
-
-
-
