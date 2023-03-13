@@ -1,5 +1,6 @@
 """Particle physics system."""
 from itertools import combinations, product
+from typing import List
 
 import numpy as np
 from pyquaternion import Quaternion
@@ -28,7 +29,7 @@ class RigidBody:
         self.particles = particles
 
         self.mass = sum([p.mass for p in particles])
-        self.intertia = RigidBody._compute_inertia(particles)
+        self.inertia = RigidBody._compute_inertia(particles)
 
         self.p = pos
         self.q = q  # quaternion / orientation
@@ -41,11 +42,7 @@ class RigidBody:
 
         self.update_particles(dt=0.0)
 
-    def _compute_inertia(particles):
-        return np.identity(3)
-
     def apply_force(self, dt):
-
         # dv/dt = F / m
         # Velocity update: dv = a * dt = F / m * dt
 
@@ -53,7 +50,6 @@ class RigidBody:
         self.F = np.zeros(3)
 
     def apply_torque(self, dt):
-
         # dL/dt = T = r x F, Iw = L
         # Angular velocity update: dw = I_inv * T * dt
 
@@ -66,7 +62,6 @@ class RigidBody:
         self.T = np.zeros(3)
 
     def update_particles(self, dt):
-
         # (i) update position and orientation of self
         # (ii) update positions and velocities of all particles
 
@@ -77,7 +72,25 @@ class RigidBody:
         for p in self.particles:
             p.r = R @ p.r0
             p.pos = self.p + p.r
-            # p.vel = self.v + np.cross(p.r, self.w)
+            p.vel = self.v + np.cross(self.w, p.r)
+
+    @staticmethod
+    def _compute_inertia(particles: List[Particle]) -> np.ndarray:
+        Ixx = sum(p.mass * (p.r0[1] ** 2 + p.r0[2] ** 2) for p in particles)
+        Iyy = sum(p.mass * (p.r0[0] ** 2 + p.r0[2] ** 2) for p in particles)
+        Izz = sum(p.mass * (p.r0[0] ** 2 + p.r0[1] ** 2) for p in particles)
+
+        Ixy = -sum(p.mass * p.r0[0] * p.r0[1] for p in particles)
+        Ixz = -sum(p.mass * p.r0[0] * p.r0[2] for p in particles)
+        Iyz = -sum(p.mass * p.r0[1] * p.r0[2] for p in particles)
+
+        return np.array(
+            [
+                [Ixx, Ixy, Ixz],
+                [Ixy, Iyy, Iyz],
+                [Ixz, Iyz, Izz],
+            ]
+        )
 
 
 def make_rigid_body(particles, vel, w):
@@ -85,8 +98,6 @@ def make_rigid_body(particles, vel, w):
     center = 1.0 / mass * np.sum([p.pos * p.mass for p in particles], axis=0)
     for p in particles:
         p.r0 = p.pos - center
-
-    # compute inertia?
 
     return RigidBody(particles, pos=center, vel=vel, w=w)
 
@@ -141,7 +152,7 @@ class SurfaceCollision:
 
 def solve_collisions(collisions):
     """Increment forces and torques of colliding bodies."""
-    for c in collision:
+    for c in collisions:
         f1 = -c.force()
         f2 = c.force()
 
@@ -188,7 +199,7 @@ def find_surface_collisions(particles, surfaces):
 
 
 def process(particles, surfaces, dt):
-    # particle to particle collisions
+    # particle-to-particle collisions
     collisions = find_particle_collisions(particles)
     for c in collisions:
         f = c.force()
@@ -259,12 +270,21 @@ def test_rigid_body():
         np.array([110.0, 120.0, 0.0]),
     ]
 
-    vel = np.zeros(3)
+    velocity = np.zeros(3)
     angular_velocity = np.zeros(3)
 
-    particles = [Particle(pos=pos, vel=vel, radius=10.0) for pos in positions]
+    particles = [Particle(pos=pos, vel=velocity, radius=10.0) for pos in positions]
     body = make_rigid_body(particles, vel=velocity, w=angular_velocity)
-    print(body)
+    print([p.r0 for p in body.particles])
+    print(body.inertia)
+
+    # compute inertia?
+    particles = [
+        Particle(pos=pos, vel=velocity, radius=10.0)
+        for pos in [np.array([-1, 1, 1]), np.array([1, -1, -1])]
+    ]
+    body2 = make_rigid_body(particles, vel=velocity, w=angular_velocity)
+    print(body2.inertia)
 
 
 if __name__ == "__main__":

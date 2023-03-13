@@ -6,11 +6,11 @@ import sdl2
 import sdl2.ext
 import numpy as np
 
-from physics import (
+from phyplay.particle.physics import (
     Particle,
     Surface,
-    RigidBody,
     process,
+    process2,
     make_rigid_body,
 )
 
@@ -42,7 +42,6 @@ class Player(sdl2.ext.Entity):
 class ParticleSprite:
     def __init__(self, world, factory, particle):
         pos = particle.pos[:2]
-        vel = particle.vel
         sz = int(2 * particle.radius)
 
         sprite = factory.from_color(random.choice(COLORS), size=(sz, sz))
@@ -57,18 +56,16 @@ class ParticleSprite:
         self.player.sprite.position = px, py
 
 
-def make_example_body():
+def make_example_body(pos, vel, wz):
     positions = [
-        np.array([100.0, 130.0]),
-        np.array([160.0, 130.0]),
-        np.array([130.0, 100.0]),
-        np.array([130.0, 160.0]),
+        pos + np.array([30, 0, 0]),
+        pos + np.array([-30, 0, 0]),
+        pos + np.array([0, 30, 0]),
+        pos + np.array([0, -30, 0]),
     ]
-    particles = [Particle(pos=np.r_[pos, 0.0], radius=10.0) for pos in positions]
+    particles = [Particle(pos=pos, radius=10.0) for pos in positions]
 
-    return make_rigid_body(
-        particles, vel=np.array([10.0, 0.0, 0.0]), w=np.array([0.0, 0.0, 1.0])
-    )
+    return make_rigid_body(particles, vel=vel, w=np.array([0.0, 0.0, wz]))
 
 
 def run():
@@ -87,14 +84,21 @@ def run():
         for _ in range(50)
     ]
 
-    rb = make_example_body()
-    particles = rb.particles
+    rb1 = make_example_body(
+        pos=np.array([200, 300.0, 0]), vel=np.array([2.0, 0.0, 0.0]), wz=0.5
+    )
+    rb2 = make_example_body(
+        pos=np.array([300, 300, 0]), vel=np.array([-5.0, 0.0, 0.0]), wz=0.5
+    )
+    rbs = [rb1, rb2]
 
-    particles = [
-        Particle(np.r_[pos, 0.0], np.r_[vel, 0.0], radius=10.0)
-        for pos, vel in init_data
+    # particles = [
+    #     Particle(np.r_[pos, 0.0], np.r_[vel, 0.0], radius=10.0)
+    #     for pos, vel in init_data
+    # ]
+    particle_sprites = [
+        ParticleSprite(world, factory, p) for rb in rbs for p in rb.particles
     ]
-    particle_sprites = [ParticleSprite(world, factory, p) for p in particles]
 
     s1 = Surface(pos=np.array([0.0, 0.0]), norm=np.array([1.0, 0.0]))  # left
     s2 = Surface(pos=np.array([0.0, 0.0]), norm=np.array([0.0, 1.0]))  # top
@@ -116,12 +120,16 @@ def run():
         dt = curr_time - prev_time
         prev_time = curr_time
 
+        # process(particles, surfaces, dt)
+        process2(rbs, dt)
+
         # update particles
-        rb.update_particles(dt)
-        process(particles, surfaces, dt)
+        for rb in rbs:
+            rb.update_particles(dt)
+
+        # render
         for ps in particle_sprites:
             ps.move(dt)
-
         world.process()
 
         sdl2.SDL_Delay(10)
