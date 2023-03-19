@@ -142,12 +142,18 @@ class SurfaceCollision:
         self.s = s
 
     def force(self):
-        K = 1000
+        K, C, T = 1000.0, 5.0, 1.0
+        v = self.p.vel
+        r_unit = -self.s.norm
 
         # penetration force
-        fs = -K * (self.s.v - self.p.pos @ self.s.norm) * self.s.norm
+        fs = -K * (self.p.pos @ self.s.norm - self.s.v) * r_unit
+        # damping force
+        fd = C * v
+        # shear (tangential) force
+        ft = T * (v - (v @ r_unit) * r_unit)
 
-        return fs
+        return fs + fd + ft
 
 
 def solve_collisions(collisions):
@@ -163,8 +169,15 @@ def solve_collisions(collisions):
         c.b2.T += np.cross(c.p2.r, f2)
 
 
+def solve_surface_collisions(collisions):
+    for c, body in collisions:
+        f = -c.force()
+        body.F += f
+        body.T += np.cross(c.p.r, f)
+
+
 def _is_colliding(p1: Particle, p2: Particle):
-    """Particle to particle collision detection."""
+    """Particle-to-particle collision detection."""
     return np.linalg.norm(p1.pos - p2.pos) < p1.radius + p2.radius
 
 
@@ -187,14 +200,14 @@ def find_rigid_body_collisions(bodies):
     ]
 
 
-def find_surface_collisions(particles, surfaces):
+def find_surface_collisions(body_particles, surfaces):
     def _is_colliding_surface(p, s):
         return p.pos @ s.norm < s.v
 
     return [
-        SurfaceCollision(p, s)
-        for p, s in product(particles, surfaces)
-        if _is_colliding_surface(p, s)
+        (SurfaceCollision(p, surf), body)
+        for (p, body), surf in product(body_particles, surfaces)
+        if _is_colliding_surface(p, surf)
     ]
 
 
@@ -213,9 +226,13 @@ def process(particles, surfaces, dt):
         c.p.apply_force(-f, dt)
 
 
-def process2(rigid_bodies, dt):
+def process2(rigid_bodies, surfaces, dt):
     # body-to-body collisions
     solve_collisions(find_rigid_body_collisions(rigid_bodies))
+
+    # surface collisions
+    ps = [(p, body) for body in rigid_bodies for p in body.particles]
+    solve_surface_collisions(find_surface_collisions(ps, surfaces))
 
     for rigid_body in rigid_bodies:
         rigid_body.apply_force(dt)
