@@ -56,14 +56,20 @@ class ParticleSprite:
         self.player.sprite.position = px, py
 
 
-def make_example_body(pos, vel, wz):
+def make_example_body(pos, vel, wz, mass=1.0):
     positions = [
-        pos + np.array([30, 0, 0]),
-        pos + np.array([-30, 0, 0]),
-        pos + np.array([0, 30, 0]),
-        pos + np.array([0, -30, 0]),
+        pos + np.array([-20, 10, 0]),
+        pos + np.array([-20, -10, 0]),
+        pos + np.array([-40, 10, 0]),
+        pos + np.array([-40, -10, 0]),
+        pos + np.array([20, 10, 0]),
+        pos + np.array([20, -10, 0]),
+        pos + np.array([40, 10, 0]),
+        pos + np.array([40, -10, 0]),
+        pos + np.array([40, 30, 0]),
+        pos + np.array([40, -30, 0]),
     ]
-    particles = [Particle(pos=pos, radius=10.0) for pos in positions]
+    particles = [Particle(pos=pos, radius=10.0, mass=mass) for pos in positions]
 
     return make_rigid_body(particles, vel=vel, w=np.array([0.0, 0.0, wz]))
 
@@ -85,10 +91,10 @@ def run():
     ]
 
     rb1 = make_example_body(
-        pos=np.array([200, 300.0, 0]), vel=np.array([2.0, 0.0, 0.0]), wz=0.5
+        pos=np.array([100, 300.0, 0]), vel=np.array([150.0, 0.0, 0.0]), wz=3.0, mass=1.0
     )
     rb2 = make_example_body(
-        pos=np.array([300, 300, 0]), vel=np.array([-5.0, 0.0, 0.0]), wz=0.5
+        pos=np.array([500, 300, 0]), vel=np.array([0.0, 0.0, 0.0]), wz=0.0, mass=1.0
     )
     rbs = [rb1, rb2]
 
@@ -121,7 +127,7 @@ def run():
         prev_time = curr_time
 
         # process(particles, surfaces, dt)
-        process2(rbs, dt)
+        process2(rbs, surfaces, dt)
 
         # update particles
         for rb in rbs:
