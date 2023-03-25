@@ -20,6 +20,7 @@ setup(
     author="Jonatan Eriksson",
     packages=["phyplay"],
     install_requires=[
+        "pytest",
         "wheel",
         "numpy",
         "pyquaternion",
