@@ -9,6 +9,7 @@ def test_phycpp():
     assert pc.add(3, 5) == 8
     assert pc.subtract(3, 5) == -2
     assert pc.multiply(3, 5) == 75
+    assert round(pc.camera(0), 1) == 0.5
 
 
 def test_quaternion():

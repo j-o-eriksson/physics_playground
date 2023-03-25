@@ -6,7 +6,8 @@ __version__ = "0.0.1"
 ext_modules = [
     Pybind11Extension(
         "phycpp",
-        ["phycpp/main.cpp"],
+        ["phycpp/main.cpp", "phycpp/particle.cpp"],
+        include_dirs=["ext/glm"],
         # Example: passing in the version to the compiled code
         define_macros=[("VERSION_INFO", __version__)],
     ),

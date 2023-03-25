@@ -1,4 +1,9 @@
+# Python
 venv
 *.pyc
+
+# C++
 *.so
 *.o
+.clangd
+compile_commands.json

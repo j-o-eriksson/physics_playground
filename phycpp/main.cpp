@@ -1,18 +1,18 @@
 #include <pybind11/pybind11.h>
 
+#include "particle.hpp"
+
 #include <optional>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
-int add(int i, int j) {
-    return i + j;
-}
+int add(int i, int j) { return i + j; }
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(phycpp, m) {
-    m.doc() = R"pbdoc(
+  m.doc() = R"pbdoc(
         Pybind11 example plugin
         -----------------------
         .. currentmodule:: python_example
@@ -22,32 +22,40 @@ PYBIND11_MODULE(phycpp, m) {
            subtract
     )pbdoc";
 
-    m.def("add", &add, R"pbdoc(
+  m.def("add", &add, R"pbdoc(
         Add two numbers
         Some other explanation about the add function.
     )pbdoc");
 
-    m.def("subtract", [](int i, int j) { return i - j; }, R"pbdoc(
+  m.def(
+      "subtract", [](int i, int j) { return i - j; }, R"pbdoc(
         Subtract two numbers
         Some other explanation about the subtract function.
     )pbdoc");
 
-    m.def("multiply",
-          [](int i, int j) { 
-            std::optional<int> a = 5; 
-            if (a) {
-              return *a * i * j;
-            } else {
-              return i * j;
-            }
-          }, R"pbdoc(
+  m.def(
+      "multiply",
+      [](int i, int j) {
+        std::optional<int> a = 5;
+        if (a) {
+          return *a * i * j;
+        } else {
+          return i * j;
+        }
+      },
+      R"pbdoc(
         Subtract two numbers
         Some other explanation about the subtract function.
+    )pbdoc");
+
+  m.def("camera", &phycpp::camera, R"pbdoc(
+        Add two numbers
+        Some other explanation about the add function.
     )pbdoc");
 
 #ifdef VERSION_INFO
-    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+  m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else
-    m.attr("__version__") = "dev";
+  m.attr("__version__") = "dev";
 #endif
 }
