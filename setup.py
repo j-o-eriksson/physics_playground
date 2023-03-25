@@ -18,7 +18,7 @@ setup(
     version=__version__,
     description="TBA",
     author="Jonatan Eriksson",
-    packages=["phyplay"],
+    packages=["phyplay", "phyplay.particle"],
     install_requires=[
         "pytest",
         "wheel",
