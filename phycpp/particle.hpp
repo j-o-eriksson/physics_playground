@@ -24,9 +24,8 @@ struct Particle {
 
 struct RigidBody {
   std::vector<Particle> particles;
-  float mass;
 
-  /* Inertia matrix */
+  float mass;
   glm::mat3 I;
 
   glm::vec3 p;
@@ -58,7 +57,9 @@ struct CollisionParams {
 
 /* Initialize rigid body. */
 RigidBody make_rigid_body(const std::vector<Particle>& particles,
-                          const glm::vec3& pos);
+                          const glm::vec3& p,
+                          const glm::vec3& v = glm::vec3(0.f),
+                          const glm::vec3& w = glm::vec3(0.f));
 
 /* Compute a rigid body's inertia matrix. */
 glm::mat3 compute_inertia_matrix(const std::vector<Particle>& particles);
@@ -67,6 +68,9 @@ glm::mat3 compute_inertia_matrix(const std::vector<Particle>& particles);
 glm::vec3 compute_force(const Particle& p1,
                         const Particle& p2,
                         const CollisionParams& params);
+
+/* Compute pertubation quaternion from angular velocity. */
+glm::quat pertubation_quat(const glm::vec3& w);
 
 }  // namespace phycpp
 

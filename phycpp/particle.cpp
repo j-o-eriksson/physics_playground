@@ -11,7 +11,7 @@ void RigidBody::apply_force(float dt) {
   // dv/dt = F / m
   // Velocity update: dv = a * dt = F / m * dt
   v += force / mass * dt;
-  force = glm::vec3(0.f, 0.f, 0.f);
+  force = glm::vec3(0.f);
 }
 
 void RigidBody::apply_torque(float dt) {
@@ -19,20 +19,20 @@ void RigidBody::apply_torque(float dt) {
   // Angular velocity update: dw = I_inv * T * dt
 
   // (i) rotate inertia and (ii) update angular velocity
-  auto R = glm::mat3_cast(q);
-  auto I_inv = R * glm::inverse(I) * R;
+  const glm::mat3 R = glm::mat3_cast(q);
+  const glm::mat3 I_inv = R * glm::inverse(I) * R;
 
   w += I_inv * torque * dt;
-  torque = glm::vec3(0.f, 0.f, 0.f);
+  torque = glm::vec3(0.f);
 }
 
 void RigidBody::update(float dt) {
   // (i) update position and orientation of self
   p += v * dt;
-  // q = q;
+  q = glm::normalize(pertubation_quat(w * dt) * q);
 
   // (ii) update positions and velocities of all particles
-  auto R = glm::mat3_cast(q);
+  const auto R = glm::mat3_cast(q);
   for (auto& particle : particles) {
     particle.r = R * particle.r0;
     particle.pos = p + particle.r;
@@ -40,7 +40,10 @@ void RigidBody::update(float dt) {
   }
 }
 
-RigidBody make_rigid_body(const glm::vec3& pos) {
+RigidBody make_rigid_body(const std::vector<Particle>& particles,
+                          const glm::vec3& p,
+                          const glm::vec3& v,
+                          const glm::vec3& w) {
   return RigidBody{};
 }
 
@@ -61,6 +64,20 @@ glm::vec3 compute_force(const Particle& p1,
   const glm::vec3 ft = params.t * (v - (v * r_unit) * r_unit);
 
   return fs + fd + ft;
+}
+
+glm::quat pertubation_quat(const glm::vec3& w) {
+  const auto w_norm = glm::length(w);
+  if (w_norm < 1e-10) {
+    return glm::quat(1.f, 0.f, 0.f, 0.f);
+  }
+
+  const float alpha = 0.5f * w_norm;
+  const float scalar = cos(alpha);
+  const float beta = sin(alpha);
+  const glm::vec3 axis = beta * w / w_norm;
+
+  return glm::quat(scalar, axis);
 }
 
 }  // namespace phycpp
