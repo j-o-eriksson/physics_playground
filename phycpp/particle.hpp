@@ -29,23 +29,16 @@ struct RigidBody {
   glm::mat3 I;
 
   glm::vec3 p;
-  glm::quat q;
   glm::vec3 v;
   glm::vec3 w;
+  glm::quat q = glm::quat(1.f, 0.f, 0.f, 0.f);
 
-  glm::vec3 force;
-  glm::vec3 torque;
+  glm::vec3 force = glm::vec3(0.f);
+  glm::vec3 torque = glm::vec3(0.f);
 
   void apply_force(float dt);
   void apply_torque(float dt);
   void update(float dt);
-};
-
-struct Collision {
-  const Particle* p1;
-  const Particle* p2;
-  const RigidBody* b1;
-  const RigidBody* b2;
 };
 
 struct CollisionParams {
@@ -55,13 +48,22 @@ struct CollisionParams {
   float t;
 };
 
+struct Collision {
+  const Particle* p1;
+  const Particle* p2;
+  RigidBody* b1;
+  RigidBody* b2;
+
+  void resolve(const CollisionParams& params);
+};
+
 /* Initialize rigid body. */
-RigidBody make_rigid_body(const std::vector<Particle>& particles,
+RigidBody make_rigid_body(std::vector<Particle> particles,
                           const glm::vec3& p,
                           const glm::vec3& v = glm::vec3(0.f),
                           const glm::vec3& w = glm::vec3(0.f));
 
-/* Compute a rigid body's inertia matrix. */
+/* Compute the inertia matrix of a rigid body from its particles. */
 glm::mat3 compute_inertia_matrix(const std::vector<Particle>& particles);
 
 /* Compute particle-to-particle collision force. */
