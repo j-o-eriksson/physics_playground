@@ -2,12 +2,12 @@
 
 #include "particle.hpp"
 
-#include <optional>
-
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
-int add(int i, int j) { return i + j; }
+int add(int i, int j) {
+  return i + j;
+}
 
 namespace py = pybind11;
 
@@ -34,23 +34,10 @@ PYBIND11_MODULE(phycpp, m) {
     )pbdoc");
 
   m.def(
-      "multiply",
-      [](int i, int j) {
-        std::optional<int> a = 5;
-        if (a) {
-          return *a * i * j;
-        } else {
-          return i * j;
-        }
-      },
+      "multiply", [](int i, int j) { return i * j + 1; },
       R"pbdoc(
         Subtract two numbers
         Some other explanation about the subtract function.
-    )pbdoc");
-
-  m.def("camera", &phycpp::camera, R"pbdoc(
-        Add two numbers
-        Some other explanation about the add function.
     )pbdoc");
 
 #ifdef VERSION_INFO
