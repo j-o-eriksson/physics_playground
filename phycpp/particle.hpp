@@ -10,16 +10,16 @@
 namespace phycpp {
 
 struct Particle {
-  float mass;
-  float radius;
-
   glm::vec3 pos;
   glm::vec3 vel;
 
+  float mass;
+  float radius;
+
   /* Initial position relative to rigid body. */
-  glm::vec3 r0;
+  glm::vec3 r0 = glm::vec3(0.f);
   /* Momentaneous position relative to rigid body. */
-  glm::vec3 r;
+  glm::vec3 r = glm::vec3(0.f);
 };
 
 struct RigidBody {
@@ -49,8 +49,8 @@ struct CollisionParams {
 };
 
 struct Collision {
-  const Particle* p1;
-  const Particle* p2;
+  Particle p1;
+  Particle p2;
   RigidBody* b1;
   RigidBody* b2;
 
@@ -59,9 +59,8 @@ struct Collision {
 
 /* Initialize rigid body. */
 RigidBody make_rigid_body(std::vector<Particle> particles,
-                          const glm::vec3& p,
-                          const glm::vec3& v = glm::vec3(0.f),
-                          const glm::vec3& w = glm::vec3(0.f));
+                          const glm::vec3& vel,
+                          const glm::vec3& w);
 
 /* Compute the inertia matrix of a rigid body from its particles. */
 glm::mat3 compute_inertia_matrix(const std::vector<Particle>& particles);
@@ -70,6 +69,9 @@ glm::mat3 compute_inertia_matrix(const std::vector<Particle>& particles);
 glm::vec3 compute_force(const Particle& p1,
                         const Particle& p2,
                         const CollisionParams& params);
+
+/* Find all colliding particles between a set of rigid bodies. */
+std::vector<Collision> find_collisions(const std::vector<RigidBody*>& bodies);
 
 /* Compute pertubation quaternion from angular velocity. */
 glm::quat pertubation_quat(const glm::vec3& w);

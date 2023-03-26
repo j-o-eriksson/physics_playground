@@ -41,19 +41,18 @@ void RigidBody::update(float dt) {
 }
 
 void Collision::resolve(const CollisionParams& params) {
-  const vec3 f = compute_force(*p1, *p2, params);
+  const vec3 f = compute_force(p1, p2, params);
   const vec3 f1 = -f;
   const vec3 f2 = f;
 
   b1->force += f1;
   b2->force += f2;
 
-  b1->torque += glm::cross(p1->r, f1);
-  b2->torque += glm::cross(p2->r, f2);
+  b1->torque += glm::cross(p1.r, f1);
+  b2->torque += glm::cross(p2.r, f2);
 }
 
 RigidBody make_rigid_body(std::vector<Particle> particles,
-                          const vec3& pos,
                           const vec3& vel,
                           const vec3& w) {
   const float mass =
@@ -115,6 +114,36 @@ vec3 compute_force(const Particle& p1,
   const vec3 ft = params.t * (v - (glm::dot(v, r_unit)) * r_unit);
 
   return fs + fd + ft;
+}
+
+bool are_colliding(const Particle& p1, const Particle& p2) {
+  return glm::length(p1.pos - p2.pos) < p1.radius + p2.radius;
+}
+
+void append_collisions(const std::vector<Particle>& ps1,
+                       const std::vector<Particle>& ps2,
+                       RigidBody* b1,
+                       RigidBody* b2,
+                       std::vector<Collision>& collisions) {
+  for (const auto& p1 : ps1) {
+    for (const auto& p2 : ps2) {
+      if (are_colliding(p1, p2)) {
+        collisions.push_back(Collision{p1, p2, b1, b2});
+      }
+    }
+  }
+}
+
+std::vector<Collision> find_collisions(const std::vector<RigidBody*>& bodies) {
+  std::vector<Collision> collisions;
+  for (size_t i = 0; i < bodies.size(); ++i) {
+    auto b_i = bodies[i];
+    for (size_t j = i + 1; j < bodies.size(); ++j) {
+      auto b_j = bodies[j];
+      append_collisions(b_i->particles, b_j->particles, b_i, b_j, collisions);
+    }
+  }
+  return collisions;
 }
 
 glm::quat pertubation_quat(const vec3& w) {
