@@ -41,6 +41,12 @@ struct RigidBody {
   void update(float dt);
 };
 
+struct Plane {
+  glm::vec3 pos;
+  glm::vec3 norm;
+  float r;
+};
+
 struct CollisionParams {
   /* Spring (k), dampening (c), and shearing (t) constants. */
   float k;
@@ -57,6 +63,13 @@ struct Collision {
   void resolve(const CollisionParams& params);
 };
 
+struct PlaneCollision {
+  Particle particle;
+  RigidBody* body;
+  Plane* plane;
+  void resolve(const CollisionParams& params);
+};
+
 /* Initialize rigid body. */
 RigidBody make_rigid_body(std::vector<Particle> particles,
                           const glm::vec3& vel,
@@ -66,12 +79,21 @@ RigidBody make_rigid_body(std::vector<Particle> particles,
 glm::mat3 compute_inertia_matrix(const std::vector<Particle>& particles);
 
 /* Compute particle-to-particle collision force. */
-glm::vec3 compute_force(const Particle& p1,
-                        const Particle& p2,
-                        const CollisionParams& params);
+glm::vec3 particle_particle_force(const Particle& p1,
+                                  const Particle& p2,
+                                  const CollisionParams& params);
+
+glm::vec3 particle_plane_force(const Particle& particle,
+                               const Plane& plane,
+                               const CollisionParams& params);
 
 /* Find all colliding particles between a set of rigid bodies. */
 std::vector<Collision> find_collisions(const std::vector<RigidBody*>& bodies);
+
+/* Find all colliding particles between a set of rigid bodies and planes. */
+std::vector<PlaneCollision> find_plane_collisions(
+    const std::vector<RigidBody*>& bodies,
+    const std::vector<Plane*>& planes);
 
 /* Compute pertubation quaternion from angular velocity. */
 glm::quat pertubation_quat(const glm::vec3& w);

@@ -71,6 +71,17 @@ PYBIND11_MODULE(phycpp, m) {
                ", position: " + glm::to_string(b.p) + ">";
       });
 
+  py::class_<phycpp::Plane>(m, "Plane")
+      .def(py::init<glm::vec3, glm::vec3, float>())
+      .def_readonly("pos", &phycpp::Plane::pos)
+      .def_readonly("norm", &phycpp::Plane::norm)
+      .def_readonly("r", &phycpp::Plane::r)
+      .def("__repr__", [](const phycpp::Plane& p) {
+        return "phycpp.CollisionParams: pos: " + glm::to_string(p.pos) +
+               ", norm: " + glm::to_string(p.norm) + ", r: " + to_string(p.r) +
+               ">";
+      });
+
   py::class_<phycpp::CollisionParams>(m, "CollisionParams")
       .def(py::init<float, float, float>())
       .def_readonly("k", &phycpp::CollisionParams::k)
@@ -89,7 +100,16 @@ PYBIND11_MODULE(phycpp, m) {
       .def_readonly("b2", &phycpp::Collision::b2)
       .def("resolve", &phycpp::Collision::resolve)
       .def("__repr__",
-           [](const phycpp::Collision& c) { return "phycpp.Collision: >"; });
+           [](const phycpp::Collision& c) { return "<phycpp.Collision>"; });
+
+  py::class_<phycpp::PlaneCollision>(m, "PlaneCollision")
+      .def(py::init<>())
+      .def_readonly("particle", &phycpp::PlaneCollision::particle)
+      .def_readonly("body", &phycpp::PlaneCollision::body)
+      .def_readonly("plane", &phycpp::PlaneCollision::plane)
+      .def("resolve", &phycpp::PlaneCollision::resolve)
+      .def("__repr__",
+           [](const phycpp::PlaneCollision& c) { return "<phycpp.PlaneCollision>"; });
 
   m.def("make_rigid_body", &phycpp::make_rigid_body, R"pbdoc(
         Initialize rigid body.
@@ -98,10 +118,13 @@ PYBIND11_MODULE(phycpp, m) {
         py::arg("particles"), py::arg("vel") = glm::vec3(0.f),
         py::arg("w") = glm::vec3(0.f));
 
-  m.def("compute_force", &phycpp::compute_force,
+  m.def("particle_particle_force", &phycpp::particle_particle_force,
         R"pbdoc(Compute force between two particles.)pbdoc");
 
   m.def("find_collisions", &phycpp::find_collisions,
+        R"pbdoc(Compute force between two particles.)pbdoc");
+
+  m.def("find_plane_collisions", &phycpp::find_plane_collisions,
         R"pbdoc(Compute force between two particles.)pbdoc");
 
 #ifdef VERSION_INFO

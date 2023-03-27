@@ -5,6 +5,8 @@ from typing import List
 import numpy as np
 from pyquaternion import Quaternion
 
+import phycpp
+
 
 class Particle:
     def __init__(self, pos, vel=np.zeros(3), mass=1.0, radius=1.0):
@@ -238,6 +240,24 @@ def process2(rigid_bodies, surfaces, dt):
         rigid_body.apply_force(dt)
         rigid_body.apply_torque(dt)
         rigid_body.update_particles(dt)
+
+
+def process3(rigid_bodies: phycpp.RigidBody, planes: phycpp.Plane, dt: float):
+
+    collisions = phycpp.find_collisions(rigid_bodies)
+    params1 = phycpp.CollisionParams(80.0, 5.0, 1.0)
+    for c in collisions:
+        c.resolve(params1)
+
+    plane_collisions = phycpp.find_plane_collisions(rigid_bodies, planes)
+    params2 = phycpp.CollisionParams(1000.0, 5.0, 1.0)
+    for c in plane_collisions:
+        c.resolve(params2)
+
+    for body in rigid_bodies:
+        body.apply_force(dt)
+        body.apply_torque(dt)
+        body.update(dt)
 
 
 def update_quaternion(q0: Quaternion, w):

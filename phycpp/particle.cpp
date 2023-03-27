@@ -41,7 +41,7 @@ void RigidBody::update(float dt) {
 }
 
 void Collision::resolve(const CollisionParams& params) {
-  const vec3 f = compute_force(p1, p2, params);
+  const vec3 f = particle_particle_force(p1, p2, params);
   const vec3 f1 = -f;
   const vec3 f2 = f;
 
@@ -50,6 +50,12 @@ void Collision::resolve(const CollisionParams& params) {
 
   b1->torque += glm::cross(p1.r, f1);
   b2->torque += glm::cross(p2.r, f2);
+}
+
+void PlaneCollision::resolve(const CollisionParams& params) {
+  const vec3 f = -particle_plane_force(particle, *plane, params);
+  body->force += f;
+  body->torque += glm::cross(particle.r, f);
 }
 
 RigidBody make_rigid_body(std::vector<Particle> particles,
@@ -101,19 +107,41 @@ mat3 compute_inertia_matrix(const std::vector<Particle>& particles) {
   };
 }
 
-vec3 compute_force(const Particle& p1,
-                   const Particle& p2,
+vec3 compute_force(const float& penetration,
+                   const glm::vec3& v,
+                   const glm::vec3& r_unit,
                    const CollisionParams& params) {
-  const vec3 r = p1.pos - p2.pos;
-  const vec3 v = p1.vel - p2.vel;
-  const float r_norm = glm::length(r);
-  const vec3 r_unit = r / r_norm;
+  /* penetration (spring) force */
+  const vec3 fs = params.k * penetration * r_unit;
 
-  const vec3 fs = params.k * (r_norm - p1.radius - p2.radius) * r_unit;
+  /* damping force */
   const vec3 fd = params.c * v;
+
+  /* shear (tangential) force */
   const vec3 ft = params.t * (v - (glm::dot(v, r_unit)) * r_unit);
 
   return fs + fd + ft;
+}
+
+vec3 particle_particle_force(const Particle& p1,
+                             const Particle& p2,
+                             const CollisionParams& params) {
+  const vec3 r = p1.pos - p2.pos;
+  const float r_norm = glm::length(r);
+  const vec3 r_unit = r / r_norm;
+
+  const float penetration = -(p1.radius + p2.radius - r_norm);
+  const vec3 v = p1.vel - p2.vel;
+
+  return compute_force(penetration, v, r_unit, params);
+}
+
+vec3 particle_plane_force(const Particle& particle,
+                          const Plane& plane,
+                          const CollisionParams& params) {
+  const vec3 r_unit = -plane.norm;
+  float penetration = plane.r -glm::dot(particle.pos, plane.norm);
+  return compute_force(penetration, particle.vel, r_unit, params);
 }
 
 bool are_colliding(const Particle& p1, const Particle& p2) {
@@ -144,6 +172,26 @@ std::vector<Collision> find_collisions(const std::vector<RigidBody*>& bodies) {
     }
   }
   return collisions;
+}
+
+bool is_colliding_surface(const Particle& particle, const Plane& plane) {
+  return glm::dot(particle.pos, plane.norm) < plane.r;
+}
+
+std::vector<PlaneCollision> find_plane_collisions(
+    const std::vector<RigidBody*>& bodies,
+    const std::vector<Plane*>& planes) {
+  std::vector<PlaneCollision> out;
+  for (const auto& body : bodies) {
+    for (const auto& particle : body->particles) {
+      for (const auto& plane : planes) {
+        if (is_colliding_surface(particle, *plane)) {
+          out.push_back(PlaneCollision{particle, body, plane});
+        }
+      }
+    }
+  }
+  return out;
 }
 
 glm::quat pertubation_quat(const vec3& w) {
