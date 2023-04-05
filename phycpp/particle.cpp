@@ -140,7 +140,7 @@ vec3 particle_plane_force(const Particle& particle,
                           const Plane& plane,
                           const CollisionParams& params) {
   const vec3 r_unit = -plane.norm;
-  float penetration = plane.r -glm::dot(particle.pos, plane.norm);
+  float penetration = plane.r - glm::dot(particle.pos, plane.norm);
   return compute_force(penetration, particle.vel, r_unit, params);
 }
 

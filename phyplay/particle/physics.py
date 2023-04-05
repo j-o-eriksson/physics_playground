@@ -1,6 +1,6 @@
 """Particle physics system."""
 from itertools import combinations, product
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from pyquaternion import Quaternion
@@ -25,9 +25,20 @@ class Particle:
         self.vel += force / self.mass * dt
         assert self.vel[2] == 0.0
 
+    def to_phycpp(self) -> phycpp.Particle:
+        return phycpp.Particle(
+            _to_vec3(self.pos), _to_vec3(self.vel), self.mass, self.radius
+        )
+
+    @staticmethod
+    def from_phycpp(p: phycpp.Particle):
+        return Particle(_from_vec3(p.pos), _from_vec3(p.vel), p.mass, p.radius)
+
 
 class RigidBody:
-    def __init__(self, particles, pos, vel, w, q=np.array([1.0, 0.0, 0.0, 0.0])):
+    def __init__(
+        self, particles, pos, vel, w, q=Quaternion(np.array([1.0, 0.0, 0.0, 0.0]))
+    ):
         self.particles = particles
 
         self.mass = sum([p.mass for p in particles])
@@ -94,6 +105,15 @@ class RigidBody:
             ]
         )
 
+    def to_phycpp(self) -> phycpp.RigidBody:
+        # set orientation?
+        return phycpp.make_rigid_body(self.particles, self.vel, self.w)
+
+    @staticmethod
+    def from_phycpp(p: phycpp.RigidBody):
+        # set orientation?
+        return make_rigid_body(p.particles, p.velocity, p.angular_velocity)
+
 
 def make_rigid_body(particles, vel, w):
     mass = sum(p.mass for p in particles)
@@ -113,7 +133,11 @@ class Surface:
 
 class Collision:
     def __init__(
-        self, p1: Particle, p2: Particle, b1: RigidBody = None, b2: RigidBody = None
+        self,
+        p1: Particle,
+        p2: Particle,
+        b1: Optional[RigidBody] = None,
+        b2: Optional[RigidBody] = None,
     ):
         self.p1 = p1
         self.p2 = p2
@@ -223,7 +247,7 @@ def process(particles, surfaces, dt):
 
     # particle to surface collisions
     surface_collisions = find_surface_collisions(particles, surfaces)
-    for c in surface_collisions:
+    for c, _ in surface_collisions:
         f = c.force()
         c.p.apply_force(-f, dt)
 
@@ -243,9 +267,8 @@ def process2(rigid_bodies, surfaces, dt):
 
 
 def process3(rigid_bodies: phycpp.RigidBody, planes: phycpp.Plane, dt: float):
-
     collisions = phycpp.find_collisions(rigid_bodies)
-    params1 = phycpp.CollisionParams(80.0, 5.0, 1.0)
+    params1 = phycpp.CollisionParams(120.0, 5.0, 1.0)
     for c in collisions:
         c.resolve(params1)
 
@@ -276,6 +299,14 @@ def _to_update_quat(w):
     v = np.sin(theta) * w / w_len
 
     return Quaternion(np.r_[a, v])
+
+
+def _to_vec3(a: np.ndarray) -> phycpp.Vec3:
+    return phycpp.Vec3(a[0], a[1], a[2])
+
+
+def _from_vec3(a: phycpp.Vec3) -> np.ndarray:
+    return np.array([a.x, a.y, a.z])
 
 
 def test_collision():

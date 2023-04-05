@@ -61,6 +61,7 @@ PYBIND11_MODULE(phycpp, m) {
       .def_readonly("position", &phycpp::RigidBody::p)
       .def_readonly("velocity", &phycpp::RigidBody::v)
       .def_readonly("angular_velocity", &phycpp::RigidBody::w)
+      .def_readonly("orientation", &phycpp::RigidBody::q)
       .def_readonly("force", &phycpp::RigidBody::force)
       .def("apply_force", &phycpp::RigidBody::apply_force)
       .def("apply_torque", &phycpp::RigidBody::apply_torque)

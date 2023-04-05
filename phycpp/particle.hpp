@@ -1,6 +1,14 @@
 #ifndef PARTICLE_HPP
 #define PARTICLE_HPP
 
+/**
+ * Particle basics physics simulation.
+ *
+ * based on:
+ * https://developer.nvidia.com/gpugems/gpugems3/part-v-physics-simulation/
+ * chapter-29-real-time-rigid-body-simulation-gpus
+ */
+
 #include <vector>
 
 #include <glm/gtc/quaternion.hpp>
@@ -16,9 +24,9 @@ struct Particle {
   float mass;
   float radius;
 
-  /* Initial position relative to rigid body. */
+  /* Initial position relative to rigid body center. */
   glm::vec3 r0 = glm::vec3(0.f);
-  /* Momentaneous position relative to rigid body. */
+  /* Momentaneous position relative to rigid body center. */
   glm::vec3 r = glm::vec3(0.f);
 };
 
@@ -47,8 +55,8 @@ struct Plane {
   float r;
 };
 
+/* Spring (k), dampen (c), and shear (t) constants. */
 struct CollisionParams {
-  /* Spring (k), dampening (c), and shearing (t) constants. */
   float k;
   float c;
   float t;
@@ -83,6 +91,7 @@ glm::vec3 particle_particle_force(const Particle& p1,
                                   const Particle& p2,
                                   const CollisionParams& params);
 
+/* Compute particle-to-plane collision force. */
 glm::vec3 particle_plane_force(const Particle& particle,
                                const Plane& plane,
                                const CollisionParams& params);
