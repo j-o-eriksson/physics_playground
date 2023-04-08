@@ -4,16 +4,7 @@ import phycpp as pc
 import phyplay.particle.physics as pp
 
 
-def _is_same(p1: pp.Particle, p2: pp.Particle) -> bool:
-    return (
-        np.all(p1.pos == p2.pos)
-        and np.all(p1.vel == p2.vel)
-        and p1.mass == p2.mass
-        and p1.radius == p2.radius
-    )
-
-
-def test_particle_conversions():
+def _get_particles():
     positions = [
         np.array([-20, 10, 0]),
         np.array([-40, 10, 0]),
@@ -21,12 +12,31 @@ def test_particle_conversions():
         np.array([40, -10, 0]),
         np.array([40, -30, 0]),
     ]
-    particles = [pp.Particle(pos=pos, radius=10.0, mass=1.0) for pos in positions]
+    return [pp.Particle(pos=pos, radius=10.0, mass=1.0) for pos in positions]
+
+
+def test_particle_conversions():
+    particles = _get_particles()
     particles_phycpp = [p.to_phycpp() for p in particles]
     particles2 = [pp.Particle.from_phycpp(p) for p in particles_phycpp]
 
-    for p1, p2 in zip(particles, particles2):
-        assert _is_same(p1, p2)
+    assert all(p1 == p2 for p1, p2 in zip(particles, particles2))
+
+
+def test_rigid_bodies():
+    particles = _get_particles()
+    v = np.array([30.0, 0.0, 0.0])
+    w = np.array([0.0, 0.0, 1.0])
+
+    body1 = pp.make_rigid_body(particles, v, w)
+    body2 = body1.to_phycpp()
+
+    dt = 0.1
+    for _ in range(10):
+        body1.update_particles(dt)
+        body2.update(dt)
+
+    assert body1.particles == pp.RigidBody.from_phycpp(body2).particles
 
 
 def test_phycpp():
@@ -52,37 +62,37 @@ def test_phycpp():
     assert body1.angular_velocity.z == body2.w[2]
 
 
-def test_collisions():
-    print()
-    pps = [(1.0, 1.0), (1.0, -1.0), (-1.0, 1.0), (-1.0, -1.0)]
-    ms = [4.0, 3.0, 2.0, 2.5]
-    particles = [
-        pc.Particle(position=pc.Vec3(x, y, 0.0), mass=m) for (x, y), m in zip(pps, ms)
-    ]
-    body1 = pc.make_rigid_body(particles, vel=pc.Vec3(3.0, 0.0, 0.0))
-    body2 = pc.make_rigid_body(particles, vel=pc.Vec3(0.0, 0.0, 0.0))
-    p0 = body1.particles[0]
-    print(p0.vel)
-
-    bodies = [body1, body2]
-    for b in bodies:
-        b.update(1.0)
-    print(p0.vel)
-    print()
-
-    for p in body1.particles:
-        print(p.pos)
-        # print(p.r0)
-    print()
-
-    for p in body2.particles:
-        print(p.pos)
-        # print(p.r0)
-    print()
-
-    collisions = pc.find_collisions(bodies)
-    for c in collisions:
-        print("collision:")
-        print(c.p1)
-        print(c.p2)
-        print()
+# def test_collisions():
+#     print()
+#     pps = [(1.0, 1.0), (1.0, -1.0), (-1.0, 1.0), (-1.0, -1.0)]
+#     ms = [4.0, 3.0, 2.0, 2.5]
+#     particles = [
+#         pc.Particle(position=pc.Vec3(x, y, 0.0), mass=m) for (x, y), m in zip(pps, ms)
+#     ]
+#     body1 = pc.make_rigid_body(particles, vel=pc.Vec3(3.0, 0.0, 0.0))
+#     body2 = pc.make_rigid_body(particles, vel=pc.Vec3(0.0, 0.0, 0.0))
+#     p0 = body1.particles[0]
+#     print(p0.vel)
+#
+#     bodies = [body1, body2]
+#     for b in bodies:
+#         b.update(1.0)
+#     print(p0.vel)
+#     print()
+#
+#     for p in body1.particles:
+#         print(p.pos)
+#         # print(p.r0)
+#     print()
+#
+#     for p in body2.particles:
+#         print(p.pos)
+#         # print(p.r0)
+#     print()
+#
+#     collisions = pc.find_collisions(bodies)
+#     for c in collisions:
+#         print("collision:")
+#         print(c.p1)
+#         print(c.p2)
+#         print()

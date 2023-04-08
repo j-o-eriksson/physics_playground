@@ -5,6 +5,7 @@ venv
 # C++
 *.so
 *.o
+.cache
 .clangd
 .clang-format
 compile_commands.json

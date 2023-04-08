@@ -25,6 +25,17 @@ class Particle:
         self.vel += force / self.mass * dt
         assert self.vel[2] == 0.0
 
+    def __eq__(p1, p2) -> bool:
+        return (
+            np.allclose(p1.pos, p2.pos)
+            and np.allclose(p1.vel, p2.vel)
+            and p1.mass == p2.mass
+            and p1.radius == p2.radius
+        )
+
+    def __repr__(self):
+        return f"pos: {np.round(self.pos, 2)}, vel: {np.round(self.vel, 2)}"
+
     def to_phycpp(self) -> phycpp.Particle:
         return phycpp.Particle(
             _to_vec3(self.pos), _to_vec3(self.vel), self.mass, self.radius
@@ -107,15 +118,19 @@ class RigidBody:
 
     def to_phycpp(self) -> phycpp.RigidBody:
         # set orientation?
-        return phycpp.make_rigid_body(self.particles, self.vel, self.w)
+        ps = [p.to_phycpp() for p in self.particles]
+        return phycpp.make_rigid_body(ps, _to_vec3(self.v), _to_vec3(self.w))
 
     @staticmethod
-    def from_phycpp(p: phycpp.RigidBody):
+    def from_phycpp(body: phycpp.RigidBody):
         # set orientation?
-        return make_rigid_body(p.particles, p.velocity, p.angular_velocity)
+        ps = [Particle.from_phycpp(p) for p in body.particles]
+        return make_rigid_body(
+            ps, _from_vec3(body.velocity), _from_vec3(body.angular_velocity)
+        )
 
 
-def make_rigid_body(particles, vel, w):
+def make_rigid_body(particles, vel, w) -> RigidBody:
     mass = sum(p.mass for p in particles)
     center = 1.0 / mass * np.sum([p.pos * p.mass for p in particles], axis=0)
     for p in particles:

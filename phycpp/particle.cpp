@@ -107,12 +107,12 @@ mat3 compute_inertia_matrix(const std::vector<Particle>& particles) {
   };
 }
 
-vec3 compute_force(const float& penetration,
+vec3 compute_force(float penetration,
                    const glm::vec3& v,
                    const glm::vec3& r_unit,
                    const CollisionParams& params) {
   /* penetration (spring) force */
-  const vec3 fs = params.k * penetration * r_unit;
+  const vec3 fs = -params.k * penetration * r_unit;
 
   /* damping force */
   const vec3 fd = params.c * v;
@@ -130,7 +130,7 @@ vec3 particle_particle_force(const Particle& p1,
   const float r_norm = glm::length(r);
   const vec3 r_unit = r / r_norm;
 
-  const float penetration = -(p1.radius + p2.radius - r_norm);
+  const float penetration = p1.radius + p2.radius - r_norm;
   const vec3 v = p1.vel - p2.vel;
 
   return compute_force(penetration, v, r_unit, params);
@@ -140,7 +140,7 @@ vec3 particle_plane_force(const Particle& particle,
                           const Plane& plane,
                           const CollisionParams& params) {
   const vec3 r_unit = -plane.norm;
-  float penetration = plane.r - glm::dot(particle.pos, plane.norm);
+  float penetration = glm::dot(particle.pos, plane.norm) - plane.r;
   return compute_force(penetration, particle.vel, r_unit, params);
 }
 
