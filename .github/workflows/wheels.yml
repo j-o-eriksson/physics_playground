@@ -33,7 +33,7 @@ jobs:
       with:
         path: dist/*.tar.gz
 
-  test_stuff:
+  build_matrix:
     name: Build multiple
     runs-on: ${{ matrix.os }}
 
@@ -46,6 +46,9 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
     - name: Build package
       run: python -m pip install .
