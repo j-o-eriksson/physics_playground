@@ -27,14 +27,14 @@ class Particle:
 
     def __eq__(p1, p2) -> bool:
         return (
-            np.allclose(p1.pos, p2.pos)
-            and np.allclose(p1.vel, p2.vel)
+            np.allclose(p1.pos, p2.pos, rtol=1e-3)
+            and np.allclose(p1.vel, p2.vel, rtol=1e-3)
             and p1.mass == p2.mass
             and p1.radius == p2.radius
         )
 
     def __repr__(self):
-        return f"pos: {np.round(self.pos, 2)}, vel: {np.round(self.vel, 2)}"
+        return f"(pos: {np.round(self.pos, 2)}, vel: {np.round(self.vel, 2)})"
 
     def to_phycpp(self) -> phycpp.Particle:
         return phycpp.Particle(
@@ -64,7 +64,7 @@ class RigidBody:
         self.F = np.zeros(3)
         self.T = np.zeros(3)
 
-        self.update_particles(dt=0.0)
+        self.update(dt=0.0)
 
     def apply_force(self, dt):
         # dv/dt = F / m
@@ -85,7 +85,7 @@ class RigidBody:
         self.w += I_inv @ self.T * dt
         self.T = np.zeros(3)
 
-    def update_particles(self, dt):
+    def update(self, dt):
         # (i) update position and orientation of self
         # (ii) update positions and velocities of all particles
 
@@ -160,7 +160,7 @@ class Collision:
         self.b2 = b2
 
     def force(self):
-        K, C, T = 80.0, 5.0, 1.0
+        K, C, T = 120.0, 5.0, 1.0
 
         r = self.p1.pos - self.p2.pos
         v = self.p1.vel - self.p2.vel
@@ -278,7 +278,7 @@ def process2(rigid_bodies, surfaces, dt):
     for rigid_body in rigid_bodies:
         rigid_body.apply_force(dt)
         rigid_body.apply_torque(dt)
-        rigid_body.update_particles(dt)
+        rigid_body.update(dt)
 
 
 def process3(rigid_bodies: phycpp.RigidBody, planes: phycpp.Plane, dt: float):
