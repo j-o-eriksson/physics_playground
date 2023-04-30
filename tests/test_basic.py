@@ -7,6 +7,10 @@ def _is_same(b1, b2):
     return b1.particles == pp.RigidBody.from_phycpp(b2).particles
 
 
+def _kinectic_energy(body: pp.RigidBody):
+    return 0.5 * sum(p.mass * np.linalg.norm(p.vel) ** 2 for p in body.particles)
+
+
 def _make_example_particles(pos=np.zeros(3)):
     positions = [
         pos + np.array([-20, 10, 0]),
@@ -35,16 +39,20 @@ def test_particle_conversions():
 
 
 def test_rigid_body_collisions():
-    bodies = [_make_example_body(0.0, 10.0, 1.0), _make_example_body(30.0, 0.0, 0.0)]
+    bodies = [_make_example_body(0.0, 10.0, 1.0), _make_example_body(100.0, 0.0, 0.0)]
     bodies_cpp = [b.to_phycpp() for b in bodies]
     for b1, b2 in zip(bodies, bodies_cpp):
         b1.update(0.0)
         b2.update(0.0)
+    e11 = np.array([_kinectic_energy(b) for b in bodies])
 
     dt = 0.1
-    for i in range(60):
+    for i in range(45):
         pp.process2(bodies, [], dt)
         pp.process3(bodies_cpp, [], dt)
+    e21 = np.array([_kinectic_energy(b) for b in bodies])
 
-        for b1, b2 in zip(bodies, bodies_cpp):
-            assert _is_same(b1, b2)
+    for b1, b2 in zip(bodies, bodies_cpp):
+        assert _is_same(b1, b2)
+    print(e11, e21)
+    assert e11.sum() > e21.sum()
