@@ -25,12 +25,12 @@ class Particle:
         self.vel += force / self.mass * dt
         assert self.vel[2] == 0.0
 
-    def __eq__(p1, p2) -> bool:
+    def __eq__(self, other) -> bool:
         return (
-            np.allclose(p1.pos, p2.pos, rtol=1e-3)
-            and np.allclose(p1.vel, p2.vel, rtol=1e-3)
-            and p1.mass == p2.mass
-            and p1.radius == p2.radius
+            np.allclose(self.pos, other.pos, rtol=1e-3)
+            and np.allclose(self.vel, other.vel, rtol=1e-3)
+            and self.mass == other.mass
+            and self.radius == other.radius
         )
 
     def __repr__(self):

@@ -47,7 +47,7 @@ def test_rigid_body_collisions():
     e11 = np.array([_kinectic_energy(b) for b in bodies])
 
     dt = 0.1
-    for i in range(45):
+    for _ in range(45):
         pp.process2(bodies, [], dt)
         pp.process3(bodies_cpp, [], dt)
     e21 = np.array([_kinectic_energy(b) for b in bodies])

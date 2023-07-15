@@ -20,6 +20,8 @@ setup(
     author="Jonatan Eriksson",
     packages=["phyplay", "phyplay.particle"],
     install_requires=[
+        "black",
+        "isort",
         "pytest",
         "wheel",
         "numpy",
